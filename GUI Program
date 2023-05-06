@@ -1,0 +1,169 @@
+import tkinter as tk
+from tkinter import ttk
+import pickle
+from typing import List
+
+# Define Person class
+class Person:
+    """Class to represent a Person"""
+    def __init__(self, name, id_number):
+        self.name = name
+        self.id_number = id_number
+
+# Define Employee class, inheriting from Person
+class Employee(Person):
+    """Class to represent a Employee"""
+    def __init__(self, name, id_number, department, job_title, basic_salary):
+        super().__init__(name, id_number)
+        self.department = department
+        self.job_title = job_title
+        self.basic_salary = basic_salary
+
+# Define Manager class, inheriting from Employee
+class Manager(Employee):
+    """Class to represent a Manager"""
+    def __init__(self, name, id_number, department, job_title, basic_salary, employees=None):
+        super().__init__(name, id_number, department, job_title, basic_salary)
+        self.employees = employees if employees else []
+
+# Define SalesPerson class, inheriting from Employee
+class SalesPerson(Employee):
+    """Class to represent a Salesperson"""
+    def __init__(self, name, id_number, department, job_title, basic_salary):
+        super().__init__(name, id_number, department, job_title, basic_salary)
+        self.sales: List[Sale] = []
+
+# Define Vehicle class
+class Vehicle:
+    """Class to represent a Vehicle"""
+    def __init__(self, id_number):
+        self.id_number = id_number
+
+# Define Car class, inheriting from Vehicle
+class Car(Vehicle):
+    """Class to represent a Car"""
+    def __init__(self, name, id_number, price, car_type):
+        super().__init__(id_number)
+        self.name = name
+        self.price = price
+        self.car_type = car_type
+
+# Define function to save data to a file
+def save_data(data, filename):
+    with open(filename, 'wb') as f:
+        pickle.dump(data, f)
+
+# Define function to load data from a file
+def load_data(filename):
+    with open(filename, 'rb') as f:
+        return pickle.load(f)
+
+# Define Sale class
+class Sale:
+    """Class to represent a Sale"""
+    def __init__(self, car: Car, quantity: int):
+        self.car = car
+        self.quantity = quantity
+
+# Add the missing function definitions here
+def display_employee_details(id_number, filename="employees.pkl"):
+    employees = load_data(filename)
+    for employee in employees:
+        if employee.id_number == id_number:
+            return vars(employee)
+    return None
+
+def display_car_details(id_number, filename="cars.pkl"):
+    cars = load_data(filename)
+    for car in cars:
+        if car.id_number == id_number:
+            return vars(car)
+    return None
+
+def calculate_commission(sales):
+    commission_rate = {"Hatch": 0.05, "Sedan": 0.06, "SUV": 0.07}
+    commission = 0
+    for sale in sales:
+        commission += sale[1] * commission_rate[sale[0]]
+    return commission
+
+# Add other functions here (add_employee, delete_employee, modify_employee,
+# display_employee_details, add_car, delete_car, modify_car, display_car_details,
+# display_sales_details, calculate_commission, display_salaries)
+
+def display_employee_info(id_number):
+    info = display_employee_details(id_number)
+    if info:
+        info_text = f"Name: {info['name']}\nID Number: {info['id_number']}\nDepartment: {info['department']}\nJob Title: {info['job_title']}\nBasic Salary: {info['basic_salary']}"
+    else:
+        info_text = "Employee not found."
+    return info_text
+
+def display_car_info(id_number):
+    info = display_car_details(id_number)
+    if info:
+        info_text = "\n".join([f"{k}: {v}" for k, v in info.items()])
+    else:
+        info_text = "Car not found."
+    return info_text
+
+def search_employee():
+    id_number = int(employee_id_var.get())
+    employee_info = display_employee_info(id_number)
+    employee_info_label.config(text=employee_info)
+
+def search_car():
+    id_number = car_id_var.get()
+    car_info = display_car_info(id_number)
+    car_info_label.config(text=car_info)
+
+def show_salaries():
+    salaries_text = ""
+    employees = load_data("employees.pkl")
+    for employee in employees:
+        commission = calculate_commission(employee.sales)
+        total_salary = employee.basic_salary + commission
+        salaries_text += f"{employee.name}: Basic Salary = {employee.basic_salary}, Commission = {commission}, Total Salary = {total_salary}\n"
+    salaries_label.config(text=salaries_text)
+
+root = tk.Tk()
+root.title("Employee and Car Info")
+
+mainframe = ttk.Frame(root, padding="12 12 12 12")
+mainframe.grid(column=0, row=0, sticky=(tk.W, tk.E, tk.N, tk.S))
+root.columnconfigure(0, weight=1)
+root.rowconfigure(0, weight=1)
+
+employee_id_var = tk.StringVar()
+car_id_var = tk.StringVar()
+
+ttk.Label(mainframe, text="Employee ID:").grid(column=1, row=1, sticky=tk.W)
+employee_id_entry = ttk.Entry(mainframe, width=10, textvariable=employee_id_var)
+employee_id_entry.grid(column=2, row=1, sticky=(tk.W, tk.E))
+
+ttk.Button(mainframe, text="Search Employee", command=search_employee).grid(column=3, row=1, sticky=tk.W)
+
+employee_info_label = ttk.Label(mainframe, text="")
+employee_info_label.grid(column=1, row=2, columnspan=3, sticky=tk.W)
+
+ttk.Label(mainframe, text="Car ID:").grid(column=1, row=3, sticky=tk.W)
+car_id_entry = ttk.Entry(mainframe, width=10, textvariable=car_id_var)
+car_id_entry.grid(column=2, row=3, sticky=(tk.W, tk.E))
+
+ttk.Button(mainframe, text="Search Car", command=search_car).grid(column=3, row=3, sticky=tk.W)
+
+car_info_label = ttk.Label(mainframe, text="")
+car_info_label.grid(column=1, row=4, columnspan=3, sticky=tk.W)
+
+ttk.Button(mainframe, text="Show Salaries", command=show_salaries).grid(column=1, row=5, sticky=tk.W)
+
+salaries_label = ttk.Label(mainframe, text="")
+salaries_label.grid(column=1, row=6, columnspan=3, sticky=tk.W)
+
+for child in mainframe.winfo_children():
+    child.grid_configure(padx=5, pady=5)
+
+employee_id_entry.focus()
+root.bind("<Return>", lambda event: search_employee())
+
+root.mainloop()
